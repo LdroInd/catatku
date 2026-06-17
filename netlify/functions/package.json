@@ -1,0 +1,11 @@
+{
+  "name": "ku-apps-functions",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "pg": "^8.12.0",
+    "jsonwebtoken": "^9.0.2",
+    "md5": "^2.3.0",
+    "dotenv": "^16.3.1"
+  }
+}

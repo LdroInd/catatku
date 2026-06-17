@@ -1,0 +1,19 @@
+{
+  "name": "ku-apps",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Aplikasi Keuangan Sederhana",
+  "scripts": {
+    "dev:backend": "node server.js",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "install:all": "cd frontend && npm install && cd ../netlify/functions && npm install"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "pg": "^8.12.0",
+    "jsonwebtoken": "^9.0.2",
+    "md5": "^2.3.0"
+  }
+}
