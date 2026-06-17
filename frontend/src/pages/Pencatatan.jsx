@@ -161,20 +161,24 @@ function Pencatatan({ user }) {
   // Print
   const handlePrint = () => {
     const printContent = printRef.current;
-    const win = window.open("", "", "width=800,height=600");
+    const win = window.open("", "", "width=900,height=700");
     win.document.write(`
       <html>
         <head>
           <title>Laporan Keuangan - ${BULAN_LIST[selectedHeader.bulan - 1]} ${selectedHeader.tahun}</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1, h2 { text-align: center; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #333; padding: 8px; text-align: left; }
-            th { background: #f0f0f0; }
-            .total { font-weight: bold; }
+            body { font-family: Arial, sans-serif; padding: 30px; font-size: 12px; }
+            h1 { text-align: center; font-size: 20px; margin-bottom: 4px; }
+            h2 { text-align: center; font-size: 16px; margin-bottom: 16px; }
+            p { margin: 4px 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th, td { border: 1px solid #333; padding: 8px 10px; text-align: left; }
+            th { background: #f0f0f0; font-size: 11px; }
+            td { font-size: 12px; }
             .pemasukan { color: green; }
             .pengeluaran { color: red; }
+            .summary-table { width: auto; margin-top: 20px; }
+            .summary-table td { border: none; padding: 4px 8px; }
           </style>
         </head>
         <body>${printContent.innerHTML}</body>
@@ -273,29 +277,42 @@ function Pencatatan({ user }) {
                       <th>Nama</th>
                       <th>Jenis</th>
                       <th>Nominal</th>
+                      <th>Last Balance</th>
                       <th>Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {details.map((d, idx) => (
-                      <tr key={d.id}>
-                        <td>{idx + 1}</td>
-                        <td>{(() => { const dt = d.tanggal?.split("T")[0] || d.tanggal; return dt ? Number(dt.split("-")[2]) : "-"; })()}</td>
-                        <td>{d.nama}</td>
-                        <td>
-                          <span className={`badge ${d.jenis === "pemasukan" ? "badge-green" : "badge-red"}`}>
-                            {d.jenis}
-                          </span>
-                        </td>
-                        <td>Rp {Number(d.nominal).toLocaleString("id-ID")}</td>
-                        <td>
-                          <button className="btn btn-xs btn-warning" onClick={() => handleEditDetail(d)}>Edit</button>
-                          <button className="btn btn-xs btn-danger" onClick={() => handleDeleteDetail(d)}>Hapus</button>
-                        </td>
-                      </tr>
-                    ))}
+                    {(() => {
+                      let runningBalance = beginningBalance;
+                      return details.map((d, idx) => {
+                        const nominal = Number(d.nominal);
+                        if (d.jenis === "pemasukan") {
+                          runningBalance += nominal;
+                        } else {
+                          runningBalance -= nominal;
+                        }
+                        return (
+                          <tr key={d.id}>
+                            <td>{idx + 1}</td>
+                            <td>{(() => { const dt = d.tanggal?.split("T")[0] || d.tanggal; return dt ? Number(dt.split("-")[2]) : "-"; })()}</td>
+                            <td>{d.nama}</td>
+                            <td>
+                              <span className={`badge ${d.jenis === "pemasukan" ? "badge-green" : "badge-red"}`}>
+                                {d.jenis}
+                              </span>
+                            </td>
+                            <td>Rp {nominal.toLocaleString("id-ID")}</td>
+                            <td><strong>Rp {runningBalance.toLocaleString("id-ID")}</strong></td>
+                            <td>
+                              <button className="btn btn-xs btn-warning" onClick={() => handleEditDetail(d)}>Edit</button>
+                              <button className="btn btn-xs btn-danger" onClick={() => handleDeleteDetail(d)}>Hapus</button>
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                     {details.length === 0 && (
-                      <tr><td colSpan="6" className="empty-text">Belum ada detail pencatatan</td></tr>
+                      <tr><td colSpan="7" className="empty-text">Belum ada detail pencatatan</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -307,6 +324,7 @@ function Pencatatan({ user }) {
                   <h1>Laporan Keuangan</h1>
                   <h2>{BULAN_LIST[selectedHeader.bulan - 1]} {selectedHeader.tahun}</h2>
                   <p><strong>{user.role}:</strong> {namaEntitas}</p>
+                  <p style={{ marginTop: "8px" }}><strong>Saldo Awal:</strong> Rp {beginningBalance.toLocaleString("id-ID")}</p>
                   <table>
                     <thead>
                       <tr>
@@ -315,25 +333,44 @@ function Pencatatan({ user }) {
                         <th>Nama</th>
                         <th>Jenis</th>
                         <th>Nominal</th>
+                        <th>Last Balance</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {details.map((d, idx) => (
-                        <tr key={d.id}>
-                          <td>{idx + 1}</td>
-                          <td>{(() => { const dt = d.tanggal?.split("T")[0] || d.tanggal; return dt ? Number(dt.split("-")[2]) : "-"; })()}</td>
-                          <td>{d.nama}</td>
-                          <td className={d.jenis}>{d.jenis}</td>
-                          <td>Rp {Number(d.nominal).toLocaleString("id-ID")}</td>
-                        </tr>
-                      ))}
+                      {(() => {
+                        let runningBalance = beginningBalance;
+                        return details.map((d, idx) => {
+                          const nominal = Number(d.nominal);
+                          if (d.jenis === "pemasukan") {
+                            runningBalance += nominal;
+                          } else {
+                            runningBalance -= nominal;
+                          }
+                          const day = (() => { const dt = d.tanggal?.split("T")[0] || d.tanggal; return dt ? Number(dt.split("-")[2]) : 1; })();
+                          const fullDate = `${day} ${BULAN_LIST[selectedHeader.bulan - 1]} ${selectedHeader.tahun}`;
+                          return (
+                            <tr key={d.id}>
+                              <td>{idx + 1}</td>
+                              <td>{fullDate}</td>
+                              <td>{d.nama}</td>
+                              <td className={d.jenis}>{d.jenis}</td>
+                              <td>Rp {nominal.toLocaleString("id-ID")}</td>
+                              <td><strong>Rp {runningBalance.toLocaleString("id-ID")}</strong></td>
+                            </tr>
+                          );
+                        });
+                      })()}
                     </tbody>
                   </table>
                   <br />
-                  <p className="total">Saldo Awal (Bulan Sebelumnya): Rp {beginningBalance.toLocaleString("id-ID")}</p>
-                  <p className="total pemasukan">Total Pemasukan: Rp {totalPemasukan.toLocaleString("id-ID")}</p>
-                  <p className="total pengeluaran">Total Pengeluaran: Rp {totalPengeluaran.toLocaleString("id-ID")}</p>
-                  <p className="total">Saldo Akhir: Rp {saldoAkhir.toLocaleString("id-ID")}</p>
+                  <table style={{ width: "auto" }}>
+                    <tbody>
+                      <tr><td><strong>Saldo Awal (Bulan Sebelumnya)</strong></td><td>: Rp {beginningBalance.toLocaleString("id-ID")}</td></tr>
+                      <tr><td className="pemasukan"><strong>Total Pemasukan</strong></td><td className="pemasukan">: Rp {totalPemasukan.toLocaleString("id-ID")}</td></tr>
+                      <tr><td className="pengeluaran"><strong>Total Pengeluaran</strong></td><td className="pengeluaran">: Rp {totalPengeluaran.toLocaleString("id-ID")}</td></tr>
+                      <tr><td><strong>Saldo Akhir</strong></td><td>: <strong>Rp {saldoAkhir.toLocaleString("id-ID")}</strong></td></tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </>
