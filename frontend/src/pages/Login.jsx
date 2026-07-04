@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { login } from "../api";
+import PasswordInput from "../components/PasswordInput";
 
 function Login({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -46,13 +47,11 @@ function Login({ onLogin }) {
           </div>
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Masukkan password"
-              required
             />
           </div>
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>

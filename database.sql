@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
   role VARCHAR(20) NOT NULL CHECK (role IN ('KUadmin', 'KU Desa', 'KU Kelompok')),
   desa_id INTEGER REFERENCES desa(id),
   kelompok_id INTEGER REFERENCES kelompok(id),
+  session_token VARCHAR(100),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -38,7 +39,9 @@ CREATE TABLE IF NOT EXISTS pencatatan_header (
   desa_id INTEGER REFERENCES desa(id),
   kelompok_id INTEGER REFERENCES kelompok(id),
   created_by INTEGER REFERENCES users(id),
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  last_updated_by INTEGER REFERENCES users(id),
+  last_updated_date TIMESTAMP
 );
 
 -- Table: pencatatan_detail
@@ -49,7 +52,10 @@ CREATE TABLE IF NOT EXISTS pencatatan_detail (
   jenis VARCHAR(20) NOT NULL CHECK (jenis IN ('pemasukan', 'pengeluaran')),
   nominal DECIMAL(15,2) NOT NULL DEFAULT 0,
   tanggal DATE NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_by INTEGER REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  last_updated_by INTEGER REFERENCES users(id),
+  last_updated_date TIMESTAMP
 );
 
 -- =============================================

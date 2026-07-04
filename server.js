@@ -30,6 +30,8 @@ const { handler: usersHandler } = await import("./netlify/functions/users.js");
 const { handler: desaHandler } = await import("./netlify/functions/desa.js");
 const { handler: kelompokHandler } = await import("./netlify/functions/kelompok.js");
 const { handler: pencatatanHandler } = await import("./netlify/functions/pencatatan.js");
+const { handler: changePasswordHandler } = await import("./netlify/functions/change-password.js");
+const { handler: checkSessionHandler } = await import("./netlify/functions/check-session.js");
 
 // Adapter: convert Express req to Netlify event format
 function netlifyAdapter(handler) {
@@ -56,6 +58,8 @@ app.all("/api/users", netlifyAdapter(usersHandler));
 app.all("/api/desa", netlifyAdapter(desaHandler));
 app.all("/api/kelompok", netlifyAdapter(kelompokHandler));
 app.all("/api/pencatatan", netlifyAdapter(pencatatanHandler));
+app.all("/api/change-password", netlifyAdapter(changePasswordHandler));
+app.all("/api/check-session", netlifyAdapter(checkSessionHandler));
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

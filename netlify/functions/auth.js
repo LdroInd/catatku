@@ -1,6 +1,7 @@
 import { query } from "./db.js";
 import md5 from "md5";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { corsHeaders } from "./auth-middleware.js";
 
 export const handler = async (event) => {
@@ -34,6 +35,13 @@ export const handler = async (event) => {
       }
 
       const user = users[0];
+
+      // Generate unique session token
+      const sessionToken = crypto.randomBytes(32).toString("hex");
+
+      // Save session token to DB (invalidates previous sessions)
+      await query(`UPDATE users SET session_token = $1 WHERE id = $2`, [sessionToken, user.id]);
+
       const token = jwt.sign(
         {
           id: user.id,
@@ -44,6 +52,7 @@ export const handler = async (event) => {
           kelompok_id: user.kelompok_id,
           nama_desa: user.nama_desa,
           nama_kelompok: user.nama_kelompok,
+          session_token: sessionToken,
         },
         process.env.JWT_SECRET,
         { expiresIn: "24h" }

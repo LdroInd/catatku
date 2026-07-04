@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import ChangePassword from "./ChangePassword";
 
 function Layout({ user, onLogout, children }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const allMenuItems = [
     { path: "/pencatatan", label: "Pencatatan Keuangan", icon: "📊", roles: null },
@@ -56,13 +59,34 @@ function Layout({ user, onLogout, children }) {
           ))}
         </nav>
         <div className="sidebar-footer">
-          <button onClick={onLogout} className="btn-logout">
-            🚪 Logout
-          </button>
+          <div className="profile-container">
+            <button className="btn-profile" onClick={() => setProfileOpen(!profileOpen)}>
+              <span className="profile-icon">⚙️</span>
+              <span className="profile-name">{user.nama}</span>
+            </button>
+            {profileOpen && (
+              <div className="profile-dropdown">
+                <button
+                  className="profile-menu-item"
+                  onClick={() => { setShowChangePassword(true); setProfileOpen(false); }}
+                >
+                  <span>🔑</span> Ganti Password
+                </button>
+                <button className="profile-menu-item logout" onClick={onLogout}>
+                  <span>🚪</span> Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
       <main className="main-content">{children}</main>
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <ChangePassword user={user} onClose={() => setShowChangePassword(false)} />
+      )}
     </div>
   );
 }

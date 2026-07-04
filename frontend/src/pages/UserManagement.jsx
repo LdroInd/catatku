@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getUsers, createUser, updateUser, deleteUser, getDesa, getKelompok } from "../api";
 import ConfirmDialog from "../components/ConfirmDialog";
+import PasswordInput from "../components/PasswordInput";
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -180,7 +181,7 @@ function UserManagement() {
             )}
             <div className="form-group">
               <label>Password {editingUser && "(kosongkan jika tidak diubah)"}</label>
-              <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Password" />
+              <PasswordInput value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Password" />
             </div>
             <div className="form-group">
               <label>No Telp</label>

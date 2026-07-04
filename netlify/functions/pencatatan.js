@@ -20,18 +20,24 @@ export const handler = async (event) => {
       let pencatatanHeaders;
       if (user.role === "KU Desa") {
         pencatatanHeaders = await query(
-          `SELECT ph.*, d.nama_desa as nama_entitas
+          `SELECT ph.*, d.nama_desa as nama_entitas,
+            uc.nama as created_by_nama, uu.nama as updated_by_nama
            FROM pencatatan_header ph
            LEFT JOIN desa d ON ph.desa_id = d.id
+           LEFT JOIN users uc ON ph.created_by = uc.id
+           LEFT JOIN users uu ON ph.last_updated_by = uu.id
            WHERE ph.desa_id = $1
            ORDER BY ph.tahun DESC, ph.bulan DESC`,
           [user.desa_id]
         );
       } else if (user.role === "KU Kelompok") {
         pencatatanHeaders = await query(
-          `SELECT ph.*, k.nama_kelompok as nama_entitas
+          `SELECT ph.*, k.nama_kelompok as nama_entitas,
+            uc.nama as created_by_nama, uu.nama as updated_by_nama
            FROM pencatatan_header ph
            LEFT JOIN kelompok k ON ph.kelompok_id = k.id
+           LEFT JOIN users uc ON ph.created_by = uc.id
+           LEFT JOIN users uu ON ph.last_updated_by = uu.id
            WHERE ph.kelompok_id = $1
            ORDER BY ph.tahun DESC, ph.bulan DESC`,
           [user.kelompok_id]
@@ -39,10 +45,13 @@ export const handler = async (event) => {
       } else {
         pencatatanHeaders = await query(
           `SELECT ph.*, 
-            COALESCE(d.nama_desa, k.nama_kelompok) as nama_entitas
+            COALESCE(d.nama_desa, k.nama_kelompok) as nama_entitas,
+            uc.nama as created_by_nama, uu.nama as updated_by_nama
            FROM pencatatan_header ph
            LEFT JOIN desa d ON ph.desa_id = d.id
            LEFT JOIN kelompok k ON ph.kelompok_id = k.id
+           LEFT JOIN users uc ON ph.created_by = uc.id
+           LEFT JOIN users uu ON ph.last_updated_by = uu.id
            ORDER BY ph.tahun DESC, ph.bulan DESC`
         );
       }
@@ -50,9 +59,14 @@ export const handler = async (event) => {
       // If header_id is specified, get details for that header
       if (params.header_id) {
         const details = await query(
-          `SELECT * FROM pencatatan_detail 
-           WHERE header_id = $1
-           ORDER BY tanggal ASC, id ASC`,
+          `SELECT pd.*, 
+            uc.nama as created_by_nama,
+            uu.nama as updated_by_nama
+           FROM pencatatan_detail pd
+           LEFT JOIN users uc ON pd.created_by = uc.id
+           LEFT JOIN users uu ON pd.last_updated_by = uu.id
+           WHERE pd.header_id = $1
+           ORDER BY pd.tanggal ASC, pd.id ASC`,
           [params.header_id]
         );
 
@@ -147,9 +161,9 @@ export const handler = async (event) => {
       if (body.type === "detail") {
         const { header_id, nama, jenis, nominal, tanggal } = body;
         const result = await query(
-          `INSERT INTO pencatatan_detail (header_id, nama, jenis, nominal, tanggal)
-           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-          [header_id, nama, jenis, nominal, tanggal]
+          `INSERT INTO pencatatan_detail (header_id, nama, jenis, nominal, tanggal, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+          [header_id, nama, jenis, nominal, tanggal, user.id]
         );
         return { statusCode: 201, headers, body: JSON.stringify({ id: result[0].id, message: "Detail pencatatan berhasil ditambahkan" }) };
       }
@@ -164,8 +178,8 @@ export const handler = async (event) => {
       if (body.type === "header") {
         const { id, bulan, tahun } = body;
         await query(
-          `UPDATE pencatatan_header SET bulan=$1, tahun=$2 WHERE id=$3`,
-          [bulan, tahun, id]
+          `UPDATE pencatatan_header SET bulan=$1, tahun=$2, last_updated_by=$3, last_updated_date=NOW() WHERE id=$4`,
+          [bulan, tahun, user.id, id]
         );
         return { statusCode: 200, headers, body: JSON.stringify({ message: "Header berhasil diupdate" }) };
       }
@@ -173,8 +187,8 @@ export const handler = async (event) => {
       if (body.type === "detail") {
         const { id, nama, jenis, nominal, tanggal } = body;
         await query(
-          `UPDATE pencatatan_detail SET nama=$1, jenis=$2, nominal=$3, tanggal=$4 WHERE id=$5`,
-          [nama, jenis, nominal, tanggal, id]
+          `UPDATE pencatatan_detail SET nama=$1, jenis=$2, nominal=$3, tanggal=$4, last_updated_by=$5, last_updated_date=NOW() WHERE id=$6`,
+          [nama, jenis, nominal, tanggal, user.id, id]
         );
         return { statusCode: 200, headers, body: JSON.stringify({ message: "Detail berhasil diupdate" }) };
       }

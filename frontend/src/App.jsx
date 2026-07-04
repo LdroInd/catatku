@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Layout from "./components/Layout";
@@ -23,11 +23,38 @@ function App() {
     setUser(userData);
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-  };
+  }, []);
+
+  // Periodic session check — every 30 seconds
+  useEffect(() => {
+    if (!user) return;
+
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/check-session", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        const data = await res.json();
+        if (data.error === "SESSION_EXPIRED") {
+          alert("Akun ini sudah login di perangkat lain. Anda akan di-logout.");
+          handleLogout();
+        }
+      } catch (err) {
+        // Network error, ignore
+      }
+    };
+
+    // Check immediately
+    checkSession();
+
+    // Then check every 30 seconds
+    const interval = setInterval(checkSession, 30000);
+    return () => clearInterval(interval);
+  }, [user, handleLogout]);
 
   if (!user) {
     return <Login onLogin={handleLogin} />;
